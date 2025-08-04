@@ -9,7 +9,7 @@ const {
   updateUserStatus,
   getAllBlogs,
   updateBlogStatus,
-  getAnalytics,
+  // getAnalytics,
   getSystemSettings,
   updateSystemSettings
 } = require('../controllers/adminController');
@@ -33,11 +33,11 @@ router.get('/dashboard',
 );
 
 // Analytics (detailed stats)
-router.get('/analytics', 
-  checkAdminRole('ADMIN', 'SUPER_ADMIN'), 
-  readLimiter, 
-  getAnalytics
-);
+// router.get('/analytics', 
+//   checkAdminRole('ADMIN', 'SUPER_ADMIN'), 
+//   readLimiter, 
+//   getAnalytics
+// );
 
 // ======================
 // ADMIN MANAGEMENT

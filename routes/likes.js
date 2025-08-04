@@ -6,9 +6,9 @@ const { likeValidation } = require('../middleware/validation');
 const router = express.Router();
 
 // Toggle like for a post
-router.post('/:postId', actionLimiter, likeValidation, toggleLike);
+router.post('/likes/:postId', actionLimiter, likeValidation, toggleLike);
 
 // Get like status for a post
-router.get('/:postId/status', readLimiter, getLikeStatus);
+router.get('/get-likes/:postId/status', readLimiter, getLikeStatus);
 
 module.exports = router;
