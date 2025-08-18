@@ -110,7 +110,7 @@ const createBlog = async (req, res) => {
   try {
     const blogData = {
       ...req.body,
-      author: req.user.id
+      author: req.admin.id
     };
     
     const blog = new Blog(blogData);
