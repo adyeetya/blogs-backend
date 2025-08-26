@@ -14,6 +14,11 @@ const blogSchema = new mongoose.Schema({
     required: [true, 'Content is required'],
     minlength: [50, 'Content must be at least 50 characters']
   },
+  image:{
+    type: String,
+    required: [true, 'Image is required'],
+    default: 'https://res.cloudinary.com/dx9d4xqej/image/upload/v1696343303/default_blog_image_oqtqtp.png'
+  },
   excerpt: {
     type: String,
     maxlength: [300, 'Excerpt cannot exceed 300 characters']

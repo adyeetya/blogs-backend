@@ -1,3 +1,5 @@
+
+const Joi = require('joi');
 const Blog = require('../models/Blog');
 const Category = require('../models/Category');
 const User = require('../models/User');
@@ -106,19 +108,39 @@ const getBlogBySlug = async (req, res) => {
   }
 };
 
+// Joi schema for blog creation
+const blogCreateSchema = Joi.object({
+  title: Joi.string().max(100).required(),
+  content: Joi.string().min(50).required(),
+  image: Joi.string().uri().optional(),
+  excerpt: Joi.string().max(300).optional(),
+  tags: Joi.array().items(Joi.string().trim().lowercase()).optional(),
+  category: Joi.string().optional(),
+  featuredImage: Joi.string().uri().optional(),
+  status: Joi.string().valid('draft', 'published', 'archived').optional(),
+  publishedAt: Joi.date().optional(),
+  contentType: Joi.string().valid('html', 'markdown').optional()
+});
+
 const createBlog = async (req, res) => {
+  // Validate request body
+  const { error, value } = blogCreateSchema.validate(req.body, { abortEarly: false });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      error: 'Validation error',
+      details: error.details.map(d => d.message)
+    });
+  }
   try {
     const blogData = {
-      ...req.body,
+      ...value,
       author: req.admin.id
     };
-    
     const blog = new Blog(blogData);
     await blog.save();
-    
     await blog.populate('author', 'firstName lastName email');
     await blog.populate('category', 'name slug color');
-    
     res.status(201).json({
       success: true,
       data: blog

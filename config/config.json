@@ -1,0 +1,20 @@
+{
+  "development": {
+    "awsS3": {
+      "accessKeyId": "",
+      "accessKey": ""
+    }
+  },
+  "staging": {
+    "awsS3": {
+      "accessKeyId": "",
+      "accessKey": ""
+    }
+  },
+  "production": {
+    "awsS3": {
+      "accessKeyId": "",
+      "accessKey": ""
+    }
+  }
+}

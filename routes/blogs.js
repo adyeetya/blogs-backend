@@ -10,7 +10,8 @@ const { protectAdmin, checkAdminRole } = require('../middleware/adminAuth');
 const { optionalUserAuth } = require('../middleware/userAuth');
 const { readLimiter, actionLimiter } = require('../middleware/rateLimiter');
 const { blogValidation } = require('../middleware/validation');
-
+const uploadHandler = require('../helper/uploadHandler').default || require('../helper/uploadHandler');
+const { uploadFilesOnS3 } = require('../controllers/uploadFilesOnS3');
 const router = express.Router();
 
 // Public routes (with optional user context for personalization)
@@ -39,6 +40,15 @@ router.delete('/:id',
   checkAdminRole('ADMIN', 'SUPER_ADMIN'),
   actionLimiter, 
   deleteBlog
+);
+
+
+// Route for uploading files to S3 (admin only, with file upload handler)
+router.post('/upload', 
+  protectAdmin,
+  checkAdminRole('ADMIN', 'SUPER_ADMIN', 'AUTHOR'),
+  (req, res, next) => uploadHandler.uploadFile(req, res, next),
+  uploadFilesOnS3
 );
 
 module.exports = router;
