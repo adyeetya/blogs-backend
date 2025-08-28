@@ -1,32 +1,33 @@
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const fs = require("fs");
-require("../../config/config");
+require("../config/config");
 
-const REGION = global.gConfig.awsS3.region || "eu-north-1"; // Ensure region is set
+const REGION = "ap-south-1"; // Ensure region is set
 const s3Client = new S3Client({
     region: REGION,
     credentials: {
-        accessKeyId: global.gConfig.awsS3.accessKeyId,
-        secretAccessKey: global.gConfig.awsS3.accessKey
-    }
-});
-
-async function uploadFileToS3(filePath, bucketName, folderName, fileName) {
+        // accessKeyId: global.gConfig.awsS3.accessKeyId,
+        accessKeyId:'AKIASZDUDMKXNYO67K5C',
+        // secretAccessKey: global.gConfig.awsS3.accessKey
+        secretAccessKey:'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'
+    }});
+console.log('s3 client cred>>>>', global.gConfig.awsS3.accessKeyId, global.gConfig.awsS3.accessKey)
+async function uploadFileToS3(filePath, bucketName, fileName) {
     try {
         const fileContent = fs.readFileSync(filePath);
-        folderName = folderName.replace(/^\/+|\/+$/g, "");
-        const keyName = `${folderName}/${fileName}`;
 
+        const keyName = `${fileName}`;
+        console.log('keyname', keyName)
         const params = {
             Bucket: bucketName,
             Key: keyName,
             Body: fileContent,
-            ACL: "public-read"
+            // ACL: "public-read"
         };
-
+        console.log('params')
         const command = new PutObjectCommand(params);
         await s3Client.send(command);
-
+        console.log('file uploaded')
         return {
             success: true,
             message: "File uploaded successfully",

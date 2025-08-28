@@ -1,14 +1,14 @@
-import { uploadFileToS3 } from "../helper/uploadFiles";
-export const uploadFilesOnS3 = async (req, res, next) => {
+const { uploadFileToS3 } = require("../helper/uploadFiles");
+const uploadFilesOnS3 = async (req, res, next) => {
     try {
         // console.log(req);
 
         const file = req.files;
         // console.log(file);
-        const buketName = '';
-        const key = req.body.keyId;
+        const buketName = 'foundersmiddleeast';
+        
 
-        const result = await uploadFileToS3(file[0].path, buketName, key, file[0].filename);
+        const result = await uploadFileToS3(file[0].path, buketName, file[0].filename);
         console.log('url', result.url)
         if (!result) {
             res.status(500).json({
@@ -27,3 +27,4 @@ export const uploadFilesOnS3 = async (req, res, next) => {
         next(error);
     }
 }
+module.exports = { uploadFilesOnS3 };

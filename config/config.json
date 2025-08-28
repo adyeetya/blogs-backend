@@ -1,20 +1,20 @@
 {
   "development": {
     "awsS3": {
-      "accessKeyId": "",
-      "accessKey": ""
+      "accessKeyId": "AKIASZDUDMKXGLKOOQWG",
+      "accessKey": "jbO1gFU17xf19mKtbpHrEV56MPraFhvDlnn"
     }
   },
   "staging": {
     "awsS3": {
-      "accessKeyId": "",
-      "accessKey": ""
+      "accessKeyId": "AKIASZDUDMKXGLKOOQWG",
+      "accessKey": "jbO1gFU17xf19mKtbpHrEV56MPraFhvDlnn"
     }
   },
   "production": {
     "awsS3": {
-      "accessKeyId": "",
-      "accessKey": ""
+      "accessKeyId": "AKIASZDUDMKXGLKOOQWG",
+      "accessKey": "jbO1gFU17xf19mKtbpHrEV56MPraFhvDlnn"
     }
   }
 }

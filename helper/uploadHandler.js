@@ -1,6 +1,5 @@
 import multer from 'multer';
 import path from 'path';
-import Boom from 'boom';
 
 class UploadHandler {
     constructor(fileSize = 90 * 1024 * 1024) {
@@ -25,10 +24,17 @@ class UploadHandler {
     handleUploadError(upload, req, res, next) {
         upload(req, res, (err) => {
             if (err) {
+                // console.error('Multer Error:', err);
                 if (err.code === 'LIMIT_FILE_SIZE') {
-                    return next(Boom.badRequest('File size limit exceeded'));
+                    return res.status(400).json({
+                        success: false,
+                        message: 'File size limit exceeded'
+                    });
                 }
-                return next(Boom.badRequest('Error in file upload'));
+                return res.status(400).json({
+                    success: false,
+                    message: 'Error in file upload0000'
+                });
             }
             next();
         });
