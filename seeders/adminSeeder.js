@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const Admin = require('../models/Admin');
 const Role = require('../models/Role');
 const bcrypt = require('bcryptjs');
 
@@ -9,9 +9,9 @@ const seedSuperAdmin = async () => {
     return;
   }
 
-  const existingAdmin = await User.findOne({ email: 'admin@blog.com' });
+  const existingAdmin = await Admin.findOne({ email: 'admin@blog.com' });
   if (!existingAdmin) {
-    const superAdmin = new User({
+    const superAdmin = new Admin({
       firstName: 'Super',
       lastName: 'Admin',
       email: 'admin@blog.com',

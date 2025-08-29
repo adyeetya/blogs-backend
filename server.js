@@ -21,14 +21,14 @@ const routes = require('./routes');
 const app = express();
 
 // Connect to database
-// connectDB();
+connectDB();
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://yourdomain.com'] 
-    : ['http://localhost:3000', 'http://localhost:3001'],
+    : ['http://localhost:4005', 'http://localhost:3001'],
   credentials: true
 }));
 
@@ -104,8 +104,8 @@ app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   
   // Seed database
-  // await seedRoles();
-  // await seedSuperAdmin();
+  await seedRoles();
+  await seedSuperAdmin();
   
-  // console.log('📊 Database seeding completed');
+  console.log('📊 Database seeding completed');
 });
