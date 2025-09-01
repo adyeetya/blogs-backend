@@ -14,7 +14,7 @@ const blogSchema = new mongoose.Schema({
     required: [true, 'Content is required'],
     minlength: [50, 'Content must be at least 50 characters']
   },
-  image:{
+  featuredImage:{
     type: String,
     required: [true, 'Image is required'],
     default: 'https://res.cloudinary.com/dx9d4xqej/image/upload/v1696343303/default_blog_image_oqtqtp.png'
@@ -29,8 +29,7 @@ const blogSchema = new mongoose.Schema({
     lowercase: true
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: [true, 'Author is required']
   },
   tags: [{
@@ -42,7 +41,7 @@ const blogSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category'
   },
-  featuredImage: String,
+  
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
