@@ -4,6 +4,137 @@ const Blog = require('../models/Blog');
 const Category = require('../models/Category');
 const User = require('../models/User');
 
+
+
+
+const getLatestBlogs = async (req, res) => {
+  try {
+    const limit = 3; // Get only 3 latest blogs for the featured section
+    
+    const blogs = await Blog.find({ status: 'published' })
+      .populate('author', 'firstName lastName email profileImage')
+      .populate('category', 'name slug color')
+      .select('-plainTextContent -content') // Exclude large content for list view
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .limit(limit);
+
+    // Format the response to match your frontend expectations
+    const formattedBlogs = blogs.map(blog => ({
+      id: blog._id,
+      title: blog.title,
+      description: blog.excerpt,
+      image: blog.featuredImage,
+      category: blog.category?.name || 'Uncategorized',
+      author: blog.author ? `${blog.author.firstName} ${blog.author.lastName}` : blog.author,
+      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      slug: blog.slug,
+      views: blog.views,
+      readingTime: blog.readingTime
+    }));
+
+    res.json({
+      success: true,
+      blogs: formattedBlogs
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+const getOlderBlogs = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9; // 9 blogs per page for grid layout
+    const skip = (page - 1) * limit;
+
+    // Get the 3 latest blog IDs to exclude them from older blogs
+    const latestBlogs = await Blog.find({ status: 'published' })
+      .select('_id')
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .limit(3);
+    
+    const latestBlogIds = latestBlogs.map(blog => blog._id);
+
+    const filter = {
+      status: 'published',
+      _id: { $nin: latestBlogIds } // Exclude the 3 latest blogs
+    };
+
+    // Apply additional filters if provided
+    if (req.query.category) {
+      const category = await Category.findOne({ slug: req.query.category });
+      if (category) filter.category = category._id;
+    }
+
+    if (req.query.author) {
+      filter.author = req.query.author;
+    }
+
+    if (req.query.tag) {
+      filter.tags = { $in: [req.query.tag] };
+    }
+
+    const blogs = await Blog.find(filter)
+      .populate('author', 'firstName lastName email profileImage')
+      .populate('category', 'name slug color')
+      .select('-plainTextContent -content') // Exclude large content for list view
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Blog.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
+
+    // Format the response to match your frontend expectations
+    const formattedBlogs = blogs.map(blog => ({
+      id: blog._id,
+      title: blog.title,
+      description: blog.excerpt,
+      image: blog.featuredImage,
+      category: blog.category?.name || 'Uncategorized',
+      author: blog.author ? `${blog.author.firstName} ${blog.author.lastName}` : blog.author,
+      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      slug: blog.slug,
+      views: blog.views,
+      readingTime: blog.readingTime
+    }));
+
+    res.json({
+      success: true,
+      blogs: formattedBlogs,
+      currentPage: page,
+      totalPages,
+      totalBlogs: total,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      nextPage: page < totalPages ? page + 1 : null,
+      previousPage: page > 1 ? page - 1 : null
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+
+
+
+
 const getAllBlogs = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -279,5 +410,7 @@ module.exports = {
   createBlog,
   updateBlog,
   deleteBlog,
-  getMyBlogs
+  getMyBlogs,
+  getLatestBlogs,  
+  getOlderBlogs    
 };

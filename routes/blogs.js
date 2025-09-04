@@ -4,7 +4,9 @@ const {
   getBlogBySlug, 
   createBlog, 
   updateBlog, 
-  deleteBlog 
+  deleteBlog,
+  getLatestBlogs,
+  getOlderBlogs
 } = require('../controllers/blogController');
 const { protectAdmin, checkAdminRole } = require('../middleware/adminAuth');
 const { optionalUserAuth } = require('../middleware/userAuth');
@@ -17,6 +19,9 @@ const router = express.Router();
 // Public routes (with optional user context for personalization)
 router.get('/', readLimiter, optionalUserAuth, getAllBlogs);
 router.get('/:slug', readLimiter, optionalUserAuth, getBlogBySlug);
+
+router.get('/latest', readLimiter, optionalUserAuth, getLatestBlogs);
+router.get('/older', readLimiter, optionalUserAuth, getOlderBlogs);
 
 // Admin-only routes for blog management
 router.post('/', 
