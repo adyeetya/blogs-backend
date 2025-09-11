@@ -26,9 +26,7 @@ connectDB();
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
-    : ['http://localhost:4005', 'http://localhost:3001'],
+  origin: ['http://localhost:4005', 'http://localhost:3001', 'https://blogs-delta-teal.vercel.app/'],
   credentials: true
 }));
 
@@ -73,7 +71,7 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  
+
   if (err.name === 'ValidationError') {
     const errors = Object.values(err.errors).map(val => val.message);
     return res.status(400).json({
@@ -82,7 +80,7 @@ app.use((err, req, res, next) => {
       message: errors
     });
   }
-  
+
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
     return res.status(400).json({
@@ -91,7 +89,7 @@ app.use((err, req, res, next) => {
       message: `${field} already exists`
     });
   }
-  
+
   res.status(err.statusCode || 500).json({
     success: false,
     error: err.message || 'Server Error'
@@ -102,10 +100,10 @@ const PORT = process.env.PORT || 5009;
 
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  
+
   // Seed database
   await seedRoles();
   await seedSuperAdmin();
-  
+
   console.log('📊 Database seeding completed');
 });
