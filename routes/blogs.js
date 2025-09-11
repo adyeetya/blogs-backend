@@ -18,10 +18,11 @@ const router = express.Router();
 
 // Public routes (with optional user context for personalization)
 router.get('/', readLimiter, optionalUserAuth, getAllBlogs);
-router.get('/:slug', readLimiter, optionalUserAuth, getBlogBySlug);
-
 router.get('/latest', readLimiter, optionalUserAuth, getLatestBlogs);
 router.get('/older', readLimiter, optionalUserAuth, getOlderBlogs);
+
+router.get('/:slug', readLimiter, optionalUserAuth, getBlogBySlug);
+
 
 // Admin-only routes for blog management
 router.post('/', 
