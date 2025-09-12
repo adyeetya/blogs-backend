@@ -12,11 +12,12 @@ const getLatestBlogs = async (req, res) => {
     const limit = 3; // Get only 3 latest blogs for the featured section
     
     const blogs = await Blog.find({ status: 'published' })
-      .populate('author', 'firstName lastName email profileImage')
-      .populate('category', 'name slug color')
+      // .populate('author', 'firstName lastName email profileImage')
+      // .populate('category', 'name slug color')
       .select('-plainTextContent -content') // Exclude large content for list view
       .sort({ publishedAt: -1, createdAt: -1 })
       .limit(limit);
+      console.log('latest blogs', blogs);
 
     // Format the response to match your frontend expectations
     const formattedBlogs = blogs.map(blog => ({
