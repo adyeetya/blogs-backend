@@ -9,6 +9,8 @@ const likeRoutes = require('./likes');
 const saveRoutes = require('./saves');
 const magazineRoutes = require('./magazines');
 
+
+const categoriesRoutes = require('./categories');
 const router = express.Router();
 
 // User routes (OAuth-based)
@@ -18,6 +20,8 @@ router.use('/auth/users', userAuthRoutes);
 router.use('/auth/admin', adminAuthRoutes);
 
 // Content routes
+
+router.use('/categories', categoriesRoutes);
 router.use('/blogs', blogRoutes);
 router.use('/admin', adminRoutes);
 router.use('/search', searchRoutes);

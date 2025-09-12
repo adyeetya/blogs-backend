@@ -12,7 +12,7 @@ const getLatestBlogs = async (req, res) => {
     const limit = 3; // Get only 3 latest blogs for the featured section
     
     const blogs = await Blog.find({ status: 'published' })
-      .populate('author', 'firstName lastName email profileImage')
+      // .populate('author', 'firstName lastName email profileImage')
       .populate('category', 'name slug color')
       .select('-plainTextContent -content') // Exclude large content for list view
       .sort({ publishedAt: -1, createdAt: -1 })
@@ -25,7 +25,7 @@ const getLatestBlogs = async (req, res) => {
       description: blog.excerpt,
       image: blog.featuredImage,
       category: blog.category?.name || 'Uncategorized',
-      author: blog.author ? `${blog.author.firstName} ${blog.author.lastName}` : blog.author,
+  author: blog.author,
       date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -83,7 +83,7 @@ const getOlderBlogs = async (req, res) => {
     }
 
     const blogs = await Blog.find(filter)
-      .populate('author', 'firstName lastName email profileImage')
+      // .populate('author', 'firstName lastName email profileImage')
       .populate('category', 'name slug color')
       .select('-plainTextContent -content') // Exclude large content for list view
       .sort({ publishedAt: -1, createdAt: -1 })
@@ -100,7 +100,7 @@ const getOlderBlogs = async (req, res) => {
       description: blog.excerpt,
       image: blog.featuredImage,
       category: blog.category?.name || 'Uncategorized',
-      author: blog.author ? `${blog.author.firstName} ${blog.author.lastName}` : blog.author,
+  author: blog.author,
       date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -170,7 +170,7 @@ const getAllBlogs = async (req, res) => {
     const sortOptions = { [sortField]: sortOrder };
 
     const blogs = await Blog.find(filter)
-      .populate('author', 'firstName lastName email')
+      // .populate('author', 'firstName lastName email')
       .populate('category', 'name slug color')
       .select('-plainTextContent') // Exclude for list view
       .sort(sortOptions)
@@ -200,7 +200,7 @@ const getAllBlogs = async (req, res) => {
 const getBlogBySlug = async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug })
-      .populate('author', 'firstName lastName email bio profileImage')
+      // .populate('author', 'firstName lastName email bio profileImage')
       .populate('category', 'name slug color');
 
     if (!blog) {
@@ -213,7 +213,7 @@ const getBlogBySlug = async (req, res) => {
     // Check if user can view this blog
     if (blog.status !== 'published') {
       if (!req.user ||
-        (req.user.id !== blog.author._id.toString() &&
+        (req.user.id !== blog.author &&
           !['ADMIN', 'SUPER_ADMIN'].includes(req.user.role.name))) {
         return res.status(403).json({
           success: false,
@@ -271,12 +271,12 @@ const createBlog = async (req, res) => {
   try {
     const blogData = {
       ...value,
-      author: req.admin.id
+      
     };
     const blog = new Blog(blogData);
     await blog.save();
-    await blog.populate('author', 'firstName lastName email');
     await blog.populate('category', 'name slug color');
+  // No author population needed
     res.status(201).json({
       success: true,
       data: blog
@@ -314,8 +314,8 @@ const updateBlog = async (req, res) => {
     Object.assign(blog, req.body);
     await blog.save();
 
-    await blog.populate('author', 'firstName lastName email');
     await blog.populate('category', 'name slug color');
+  // No author population needed
 
     res.json({
       success: true,
