@@ -1,3 +1,77 @@
+// Search blogs by title, category, tags, or author
+const searchBlogs = async (req, res) => {
+  try {
+    const { q, category, author, tag, page = 1, limit = 10 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    let filter = { status: 'published' };
+
+    // Title or keyword search (text index)
+    if (q) {
+      filter.$text = { $search: q };
+    }
+
+    // Category filter (by slug)
+    if (category) {
+      const cat = await Category.findOne({ slug: category });
+      if (cat) filter.category = cat._id;
+    }
+
+    // Author filter (by string id)
+    if (author) {
+      filter.author = author;
+    }
+
+    // Tag filter
+    if (tag) {
+      filter.tags = { $in: [tag] };
+    }
+
+    const blogs = await Blog.find(filter)
+      .populate('category', 'name slug color')
+      .select('-plainTextContent -content')
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Blog.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
+
+    const formattedBlogs = blogs.map(blog => ({
+      id: blog._id,
+      title: blog.title,
+      description: blog.excerpt,
+      image: blog.featuredImage,
+      category: blog.category?.name || 'Uncategorized',
+      author: blog.author,
+      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      slug: blog.slug,
+      views: blog.views,
+      readingTime: blog.readingTime
+    }));
+
+    res.json({
+      success: true,
+      blogs: formattedBlogs,
+      currentPage: parseInt(page),
+      totalPages,
+      totalBlogs: total,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      nextPage: page < totalPages ? parseInt(page) + 1 : null,
+      previousPage: page > 1 ? parseInt(page) - 1 : null
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
 
 const Joi = require('joi');
 const Blog = require('../models/Blog');
@@ -416,4 +490,5 @@ module.exports = {
   getMyBlogs,
   getLatestBlogs,  
   getOlderBlogs    
+  ,searchBlogs
 };

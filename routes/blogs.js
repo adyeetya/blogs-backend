@@ -6,7 +6,8 @@ const {
   updateBlog, 
   deleteBlog,
   getLatestBlogs,
-  getOlderBlogs
+  getOlderBlogs,
+  searchBlogs
 } = require('../controllers/blogController');
 const { protectAdmin, checkAdminRole } = require('../middleware/adminAuth');
 const { optionalUserAuth } = require('../middleware/userAuth');
@@ -16,11 +17,12 @@ const uploadHandler = require('../helper/uploadHandler').default || require('../
 const { uploadFilesOnS3 } = require('../controllers/uploadFilesOnS3');
 const router = express.Router();
 
+
 // Public routes (with optional user context for personalization)
 router.get('/', readLimiter, optionalUserAuth, getAllBlogs);
+router.get('/search', readLimiter, optionalUserAuth, searchBlogs);
 router.get('/latest', readLimiter, optionalUserAuth, getLatestBlogs);
 router.get('/older', readLimiter, optionalUserAuth, getOlderBlogs);
-
 router.get('/:slug', readLimiter, optionalUserAuth, getBlogBySlug);
 
 
