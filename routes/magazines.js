@@ -6,8 +6,9 @@ const uploadHandler = require('../helper/uploadHandler').default || require('../
 const router = express.Router();
 
 // Public
+router.get('/latest', controller.latest);
 router.get('/', controller.list);
-router.get("/:slug", controller.getBySlug);
+router.get(":slug", controller.getBySlug);
 
 // Admin only
 router.post('/',

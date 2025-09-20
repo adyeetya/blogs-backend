@@ -1,3 +1,5 @@
+// Get latest 3 magazines (for homepage)
+
 // controllers/magazine.controller.js
 const path = require("path");
 const fs = require("fs");
@@ -37,6 +39,17 @@ module.exports = {
     }
   },
 
+  async latest(req, res) {
+    try {
+      const mags = await Magazine.find()
+        .sort({ createdAt: -1 })
+        .limit(3);
+      return res.json({ success: true, data: mags });
+    } catch (e) {
+      return res.status(500).json({ success: false, message: e.message });
+    }
+  },
+  
   async getBySlug(req, res) {
     const { slug } = req.params;
     const mag = await Magazine.findOne({ slug });
@@ -45,8 +58,33 @@ module.exports = {
   },
 
   async list(req, res) {
-    const mags = await Magazine.find().sort({ createdAt: -1 });
-    return res.json({ success: true, data: mags });
+    // Pagination: ?page=1&limit=10
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page, 10);
+    limit = parseInt(limit, 10);
+    if (isNaN(page) || page < 1) page = 1;
+    if (isNaN(limit) || limit < 1 || limit > 100) limit = 10;
+
+    const skip = (page - 1) * limit;
+    const [mags, total] = await Promise.all([
+      Magazine.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Magazine.countDocuments(),
+    ]);
+    return res.json({
+      success: true,
+      data: mags,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    });
   },
 
   async uploadPdfAndProcess(req, res) {
@@ -75,14 +113,14 @@ module.exports = {
         s3Prefix: mag.s3Prefix,
         bucket: BUCKET,
       });
- console.log('Proccessed PDF and uploaded to S3', pages.length, 'pages');
+      console.log('Proccessed PDF and uploaded to S3', pages.length, 'pages');
       mag.pages = pages;
       mag.pageCount = pages.length;
       mag.coverImageUrl = coverImageUrl || (pages[0] && pages[0].url);
       mag.status = "ready";
       await mag.save();
 
-      fs.unlink(file.path, () => {});
+      fs.unlink(file.path, () => { });
       return res.json({ success: true, data: mag });
     } catch (e) {
       mag.status = "failed";
