@@ -15,8 +15,13 @@ const loginValidation = [
   body('password').notEmpty().withMessage('Password is required')
 ];
 
+
 // Public admin routes
 router.post('/login', actionLimiter, loginValidation, adminLogin);
+
+// Token verification route (public, just checks token validity)
+const { verifyAdminToken } = require('../controllers/adminAuthController');
+router.post('/verify', verifyAdminToken);
 
 // Protected admin routes
 router.use(protectAdmin); // All routes below require admin authentication

@@ -169,8 +169,38 @@ const createAdmin = async (req, res) => {
   }
 };
 
+// Verify admin token controller
+const jwt = require('jsonwebtoken');
+const config = require('../config/config');
+
+const verifyAdminToken = async (req, res) => {
+  try {
+    // Accept token from header or body
+    let token = req.headers.authorization;
+    if (token && token.startsWith('Bearer ')) {
+      token = token.split(' ')[1];
+    } else if (req.body.token) {
+      token = req.body.token;
+    }
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'No token provided' });
+    }
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Optionally, fetch admin info
+    const admin = await Admin.findById(decoded.id).select('-password -twoFactorSecret');
+    if (!admin) {
+      return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+    res.json({ success: true, data: { admin } });
+  } catch (error) {
+    res.status(401).json({ success: false, message: 'Token invalid or expired', error: error.message });
+  }
+};
+
 module.exports = {
   adminLogin,
   getAdminProfile,
-  createAdmin
+  createAdmin,
+  verifyAdminToken
 };
