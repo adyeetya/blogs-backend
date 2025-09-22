@@ -84,7 +84,7 @@ const User = require('../models/User');
 const getLatestBlogs = async (req, res) => {
   try {
     const limit = 3; // Get only 3 latest blogs for the featured section
-    
+
     const blogs = await Blog.find({ status: 'published' })
       // .populate('author', 'firstName lastName email profileImage')
 
@@ -93,7 +93,7 @@ const getLatestBlogs = async (req, res) => {
       .select('-plainTextContent -content') // Exclude large content for list view
       .sort({ publishedAt: -1, createdAt: -1 })
       .limit(limit);
-      console.log('latest blogs', blogs);
+    console.log('latest blogs', blogs);
 
     // Format the response to match your frontend expectations
     const formattedBlogs = blogs.map(blog => ({
@@ -102,7 +102,7 @@ const getLatestBlogs = async (req, res) => {
       description: blog.excerpt,
       image: blog.featuredImage,
       category: blog.category?.name || 'Uncategorized',
-  author: blog.author,
+      author: blog.author,
       date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -137,19 +137,21 @@ const getOlderBlogs = async (req, res) => {
       .select('_id')
       .sort({ publishedAt: -1, createdAt: -1 })
       .limit(3);
-    
+
     const latestBlogIds = latestBlogs.map(blog => blog._id);
 
     const filter = {
       status: 'published',
       _id: { $nin: latestBlogIds } // Exclude the 3 latest blogs
     };
-
+    // console.log('req.query', req.query);
     // Apply additional filters if provided
     if (req.query.category) {
       const category = await Category.findOne({ slug: req.query.category });
+      // console.log('found category', category);
       if (category) filter.category = category._id;
     }
+    // console.log('filter after category', filter);
 
     if (req.query.author) {
       filter.author = req.query.author;
@@ -160,7 +162,8 @@ const getOlderBlogs = async (req, res) => {
     }
 
     const blogs = await Blog.find(filter)
-      // .populate('author', 'firstName lastName email profileImage')
+    // console.log('blogs>>>',blogs)
+
       .populate('category', 'name slug color')
       .select('-plainTextContent -content') // Exclude large content for list view
       .sort({ publishedAt: -1, createdAt: -1 })
@@ -177,7 +180,7 @@ const getOlderBlogs = async (req, res) => {
       description: blog.excerpt,
       image: blog.featuredImage,
       category: blog.category?.name || 'Uncategorized',
-  author: blog.author,
+      author: blog.author,
       date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -209,6 +212,110 @@ const getOlderBlogs = async (req, res) => {
 };
 
 
+
+const getBlogsByCategory = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 9, 1), 50);
+    const skip = (page - 1) * limit;
+
+    const category = await Category.findOne({ slug }).select('_id name slug color');
+    console.log('Category found:', category);
+    if (!category) {
+      return res.json({
+        success: true,
+        blogs: [],
+        currentPage: page,
+        totalPages: 0,
+        totalBlogs: 0,
+        hasNextPage: false,
+        hasPreviousPage: page > 1,
+        nextPage: null,
+        previousPage: page > 1 ? page - 1 : null
+      });
+    }
+
+    const filter = {
+      status: 'published',
+      category: category._id
+    };
+
+    if (req.query.author) filter.author = req.query.author;
+    if (req.query.tag) filter.tags = { $in: [String(req.query.tag).toLowerCase()] };
+
+    const [blogs, total] = await Promise.all([
+      Blog.find(filter)
+        .select('-plainTextContent -content')
+        .populate('category', 'name slug color')
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Blog.countDocuments(filter)
+    ]);
+    // console.log('found blog', blogs);
+    // console.log('total blogs in category:', total);
+
+    const totalPages = Math.ceil(total / limit) || 0;
+
+    // If requested page is out of range but there are results, return last page
+    if (total > 0 && page > totalPages) {
+      const lastSkip = (totalPages - 1) * limit;
+      const lastPageBlogs = await Blog.find(filter)
+        .select('-plainTextContent -content')
+        .populate('category', 'name slug color')
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .skip(lastSkip)
+        .limit(limit);
+
+      const formattedLast = lastPageBlogs.map(mapBlogCard);
+      return res.json({
+        success: true,
+        blogs: formattedLast,
+        currentPage: totalPages,
+        totalPages,
+        totalBlogs: total,
+        hasNextPage: false,
+        hasPreviousPage: totalPages > 1,
+        nextPage: null,
+        previousPage: totalPages > 1 ? totalPages - 1 : null
+      });
+    }
+
+    const formatted = blogs.map(mapBlogCard);
+
+    return res.json({
+      success: true,
+      blogs: formatted,
+      currentPage: page,
+      totalPages,
+      totalBlogs: total,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      nextPage: page < totalPages ? page + 1 : null,
+      previousPage: page > 1 ? page - 1 : null
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+function mapBlogCard(blog) {
+  return {
+    id: blog._id,
+    title: blog.title,
+    description: blog.excerpt,
+    image: blog.featuredImage,
+    category: blog.category?.name || 'Uncategorized',
+    author: blog.author,
+    date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric'
+    }),
+    slug: blog.slug,
+    views: blog.views,
+    readingTime: blog.readingTime
+  };
+}
 
 
 
@@ -328,7 +435,7 @@ const blogCreateSchema = Joi.object({
   status: Joi.string().valid('draft', 'published', 'archived').optional(),
   publishedAt: Joi.date().optional(),
   contentType: Joi.string().valid('html', 'markdown').optional(),
-  
+
   // Optional fields that might be provided but have defaults
   views: Joi.number().integer().min(0).optional(),
   likesCount: Joi.number().integer().min(0).optional(),
@@ -348,12 +455,12 @@ const createBlog = async (req, res) => {
   try {
     const blogData = {
       ...value,
-      
+
     };
     const blog = new Blog(blogData);
     await blog.save();
     await blog.populate('category', 'name slug color');
-  // No author population needed
+    // No author population needed
     res.status(201).json({
       success: true,
       data: blog
@@ -392,7 +499,7 @@ const updateBlog = async (req, res) => {
     await blog.save();
 
     await blog.populate('category', 'name slug color');
-  // No author population needed
+    // No author population needed
 
     res.json({
       success: true,
@@ -488,7 +595,8 @@ module.exports = {
   updateBlog,
   deleteBlog,
   getMyBlogs,
-  getLatestBlogs,  
-  getOlderBlogs    
-  ,searchBlogs
+  getLatestBlogs,
+  getOlderBlogs
+  , searchBlogs,
+  getBlogsByCategory
 };
