@@ -1,10 +1,15 @@
+const Joi = require("joi");
+const Blog = require("../models/Blog");
+const Category = require("../models/Category");
+const User = require("../models/User");
+
 // Search blogs by title, category, tags, or author
 const searchBlogs = async (req, res) => {
   try {
     const { q, category, author, tag, page = 1, limit = 10 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    let filter = { status: 'published' };
+    let filter = { status: "published" };
 
     // Title or keyword search (text index)
     if (q) {
@@ -28,8 +33,8 @@ const searchBlogs = async (req, res) => {
     }
 
     const blogs = await Blog.find(filter)
-      .populate('category', 'name slug color')
-      .select('-plainTextContent -content')
+      .populate("category", "name slug color")
+      .select("-plainTextContent -content")
       .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -37,21 +42,24 @@ const searchBlogs = async (req, res) => {
     const total = await Blog.countDocuments(filter);
     const totalPages = Math.ceil(total / limit);
 
-    const formattedBlogs = blogs.map(blog => ({
+    const formattedBlogs = blogs.map((blog) => ({
       id: blog._id,
       title: blog.title,
       description: blog.excerpt,
       image: blog.featuredImage,
-      category: blog.category?.name || 'Uncategorized',
+      category: blog.category?.name || "Uncategorized",
       author: blog.author,
-      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
+      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }
+      ),
       slug: blog.slug,
       views: blog.views,
-      readingTime: blog.readingTime
+      readingTime: blog.readingTime,
     }));
 
     res.json({
@@ -63,65 +71,59 @@ const searchBlogs = async (req, res) => {
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
       nextPage: page < totalPages ? parseInt(page) + 1 : null,
-      previousPage: page > 1 ? parseInt(page) - 1 : null
+      previousPage: page > 1 ? parseInt(page) - 1 : null,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
-
-const Joi = require('joi');
-const Blog = require('../models/Blog');
-const Category = require('../models/Category');
-const User = require('../models/User');
-
-
-
 
 const getLatestBlogs = async (req, res) => {
   try {
     const limit = 3; // Get only 3 latest blogs for the featured section
 
-    const blogs = await Blog.find({ status: 'published' })
+    const blogs = await Blog.find({ status: "published" })
       // .populate('author', 'firstName lastName email profileImage')
 
-      .populate('category', 'name slug color')
+      .populate("category", "name slug color")
 
-      .select('-plainTextContent -content') // Exclude large content for list view
+      .select("-plainTextContent -content") // Exclude large content for list view
       .sort({ publishedAt: -1, createdAt: -1 })
       .limit(limit);
-    console.log('latest blogs', blogs);
+    console.log("latest blogs", blogs);
 
     // Format the response to match your frontend expectations
-    const formattedBlogs = blogs.map(blog => ({
+    const formattedBlogs = blogs.map((blog) => ({
       id: blog._id,
       title: blog.title,
       description: blog.excerpt,
       image: blog.featuredImage,
-      category: blog.category?.name || 'Uncategorized',
+      category: blog.category?.name || "Uncategorized",
       author: blog.author,
-      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
+      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }
+      ),
       slug: blog.slug,
       views: blog.views,
-      readingTime: blog.readingTime
+      readingTime: blog.readingTime,
     }));
 
     res.json({
       success: true,
-      blogs: formattedBlogs
+      blogs: formattedBlogs,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -133,16 +135,16 @@ const getOlderBlogs = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Get the 3 latest blog IDs to exclude them from older blogs
-    const latestBlogs = await Blog.find({ status: 'published' })
-      .select('_id')
+    const latestBlogs = await Blog.find({ status: "published" })
+      .select("_id")
       .sort({ publishedAt: -1, createdAt: -1 })
       .limit(3);
 
-    const latestBlogIds = latestBlogs.map(blog => blog._id);
+    const latestBlogIds = latestBlogs.map((blog) => blog._id);
 
     const filter = {
-      status: 'published',
-      _id: { $nin: latestBlogIds } // Exclude the 3 latest blogs
+      status: "published",
+      _id: { $nin: latestBlogIds }, // Exclude the 3 latest blogs
     };
     // console.log('req.query', req.query);
     // Apply additional filters if provided
@@ -162,10 +164,10 @@ const getOlderBlogs = async (req, res) => {
     }
 
     const blogs = await Blog.find(filter)
-    // console.log('blogs>>>',blogs)
+      // console.log('blogs>>>',blogs)
 
-      .populate('category', 'name slug color')
-      .select('-plainTextContent -content') // Exclude large content for list view
+      .populate("category", "name slug color")
+      .select("-plainTextContent -content") // Exclude large content for list view
       .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -174,21 +176,24 @@ const getOlderBlogs = async (req, res) => {
     const totalPages = Math.ceil(total / limit);
 
     // Format the response to match your frontend expectations
-    const formattedBlogs = blogs.map(blog => ({
+    const formattedBlogs = blogs.map((blog) => ({
       id: blog._id,
       title: blog.title,
       description: blog.excerpt,
       image: blog.featuredImage,
-      category: blog.category?.name || 'Uncategorized',
+      category: blog.category?.name || "Uncategorized",
       author: blog.author,
-      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
+      date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }
+      ),
       slug: blog.slug,
       views: blog.views,
-      readingTime: blog.readingTime
+      readingTime: blog.readingTime,
     }));
 
     res.json({
@@ -200,18 +205,15 @@ const getOlderBlogs = async (req, res) => {
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
       nextPage: page < totalPages ? page + 1 : null,
-      previousPage: page > 1 ? page - 1 : null
+      previousPage: page > 1 ? page - 1 : null,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
-
-
 
 const getBlogsByCategory = async (req, res) => {
   try {
@@ -220,8 +222,10 @@ const getBlogsByCategory = async (req, res) => {
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 9, 1), 50);
     const skip = (page - 1) * limit;
 
-    const category = await Category.findOne({ slug }).select('_id name slug color');
-    console.log('Category found:', category);
+    const category = await Category.findOne({ slug }).select(
+      "_id name slug color"
+    );
+    console.log("Category found:", category);
     if (!category) {
       return res.json({
         success: true,
@@ -232,26 +236,27 @@ const getBlogsByCategory = async (req, res) => {
         hasNextPage: false,
         hasPreviousPage: page > 1,
         nextPage: null,
-        previousPage: page > 1 ? page - 1 : null
+        previousPage: page > 1 ? page - 1 : null,
       });
     }
 
     const filter = {
-      status: 'published',
-      category: category._id
+      status: "published",
+      category: category._id,
     };
 
     if (req.query.author) filter.author = req.query.author;
-    if (req.query.tag) filter.tags = { $in: [String(req.query.tag).toLowerCase()] };
+    if (req.query.tag)
+      filter.tags = { $in: [String(req.query.tag).toLowerCase()] };
 
     const [blogs, total] = await Promise.all([
       Blog.find(filter)
-        .select('-plainTextContent -content')
-        .populate('category', 'name slug color')
+        .select("-plainTextContent -content")
+        .populate("category", "name slug color")
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit),
-      Blog.countDocuments(filter)
+      Blog.countDocuments(filter),
     ]);
     // console.log('found blog', blogs);
     // console.log('total blogs in category:', total);
@@ -262,8 +267,8 @@ const getBlogsByCategory = async (req, res) => {
     if (total > 0 && page > totalPages) {
       const lastSkip = (totalPages - 1) * limit;
       const lastPageBlogs = await Blog.find(filter)
-        .select('-plainTextContent -content')
-        .populate('category', 'name slug color')
+        .select("-plainTextContent -content")
+        .populate("category", "name slug color")
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(lastSkip)
         .limit(limit);
@@ -278,7 +283,7 @@ const getBlogsByCategory = async (req, res) => {
         hasNextPage: false,
         hasPreviousPage: totalPages > 1,
         nextPage: null,
-        previousPage: totalPages > 1 ? totalPages - 1 : null
+        previousPage: totalPages > 1 ? totalPages - 1 : null,
       });
     }
 
@@ -293,7 +298,7 @@ const getBlogsByCategory = async (req, res) => {
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
       nextPage: page < totalPages ? page + 1 : null,
-      previousPage: page > 1 ? page - 1 : null
+      previousPage: page > 1 ? page - 1 : null,
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
@@ -306,18 +311,21 @@ function mapBlogCard(blog) {
     title: blog.title,
     description: blog.excerpt,
     image: blog.featuredImage,
-    category: blog.category?.name || 'Uncategorized',
+    category: blog.category?.name || "Uncategorized",
     author: blog.author,
-    date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric'
-    }),
+    date: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }
+    ),
     slug: blog.slug,
     views: blog.views,
-    readingTime: blog.readingTime
+    readingTime: blog.readingTime,
   };
 }
-
-
 
 const getAllBlogs = async (req, res) => {
   try {
@@ -328,8 +336,8 @@ const getAllBlogs = async (req, res) => {
     let filter = {};
 
     // For non-admin users, only show published blogs
-    if (!req.user || !['ADMIN', 'SUPER_ADMIN'].includes(req.user.role.name)) {
-      filter.status = 'published';
+    if (!req.user || !["ADMIN", "SUPER_ADMIN"].includes(req.user.role.name)) {
+      filter.status = "published";
     }
 
     // Category filter
@@ -344,19 +352,23 @@ const getAllBlogs = async (req, res) => {
     }
 
     // Status filter (admin only)
-    if (req.query.status && req.user && ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role.name)) {
+    if (
+      req.query.status &&
+      req.user &&
+      ["ADMIN", "SUPER_ADMIN"].includes(req.user.role.name)
+    ) {
       filter.status = req.query.status;
     }
 
     // Sort options
-    const sortField = req.query.sort || 'publishedAt';
-    const sortOrder = req.query.order === 'asc' ? 1 : -1;
+    const sortField = req.query.sort || "publishedAt";
+    const sortOrder = req.query.order === "asc" ? 1 : -1;
     const sortOptions = { [sortField]: sortOrder };
 
     const blogs = await Blog.find(filter)
       // .populate('author', 'firstName lastName email')
-      .populate('category', 'name slug color')
-      .select('-plainTextContent') // Exclude for list view
+      .populate("category", "name slug color")
+      .select("-plainTextContent") // Exclude for list view
       .sort(sortOptions)
       .skip(skip)
       .limit(limit);
@@ -370,13 +382,13 @@ const getAllBlogs = async (req, res) => {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -385,40 +397,42 @@ const getBlogBySlug = async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug })
       // .populate('author', 'firstName lastName email bio profileImage')
-      .populate('category', 'name slug color');
+      .populate("category", "name slug color");
 
     if (!blog) {
       return res.status(404).json({
         success: false,
-        message: 'Blog post not found'
+        message: "Blog post not found",
       });
     }
 
     // Check if user can view this blog
-    if (blog.status !== 'published') {
-      if (!req.user ||
+    if (blog.status !== "published") {
+      if (
+        !req.user ||
         (req.user.id !== blog.author &&
-          !['ADMIN', 'SUPER_ADMIN'].includes(req.user.role.name))) {
+          !["ADMIN", "SUPER_ADMIN"].includes(req.user.role.name))
+      ) {
         return res.status(403).json({
           success: false,
-          message: 'Access denied'
+          message: "Access denied",
         });
       }
     }
 
     // Increment view count for published blogs
-    if (blog.status === 'published') {
+    if (blog.status === "published") {
       await Blog.findByIdAndUpdate(blog._id, { $inc: { views: 1 } });
     }
 
     res.json({
       success: true,
-      data: blog
+      data: blog,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -431,44 +445,47 @@ const blogCreateSchema = Joi.object({
   excerpt: Joi.string().max(300).optional(),
   author: Joi.string().required(), // Added - required in Mongoose schema
   tags: Joi.array().items(Joi.string().trim().lowercase()).optional(),
-  category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(), // ObjectId validation
-  status: Joi.string().valid('draft', 'published', 'archived').optional(),
+  category: Joi.string()
+    .regex(/^[0-9a-fA-F]{24}$/)
+    .optional(), // ObjectId validation
+  status: Joi.string().valid("draft", "published", "archived").optional(),
   publishedAt: Joi.date().optional(),
-  contentType: Joi.string().valid('html', 'markdown').optional(),
+  contentType: Joi.string().valid("html", "markdown").optional(),
 
   // Optional fields that might be provided but have defaults
   views: Joi.number().integer().min(0).optional(),
   likesCount: Joi.number().integer().min(0).optional(),
-  savesCount: Joi.number().integer().min(0).optional()
+  savesCount: Joi.number().integer().min(0).optional(),
 });
 
 const createBlog = async (req, res) => {
   // Validate request body
-  const { error, value } = blogCreateSchema.validate(req.body, { abortEarly: false });
+  const { error, value } = blogCreateSchema.validate(req.body, {
+    abortEarly: false,
+  });
   if (error) {
     return res.status(400).json({
       success: false,
-      error: 'Validation error',
-      details: error.details.map(d => d.message)
+      error: "Validation error",
+      details: error.details.map((d) => d.message),
     });
   }
   try {
     const blogData = {
       ...value,
-
     };
     const blog = new Blog(blogData);
     await blog.save();
-    await blog.populate('category', 'name slug color');
+    await blog.populate("category", "name slug color");
     // No author population needed
     res.status(201).json({
       success: true,
-      data: blog
+      data: blog,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -476,39 +493,28 @@ const createBlog = async (req, res) => {
 const updateBlog = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
+    console.log("Blog found for update:", blog);
 
     if (!blog) {
       return res.status(404).json({
         success: false,
-        message: 'Blog post not found'
-      });
-    }
-
-    // Check permissions
-    const canEdit = blog.author.toString() === req.user.id ||
-      ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role.name);
-
-    if (!canEdit) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
+        message: "Blog post not found",
       });
     }
 
     Object.assign(blog, req.body);
     await blog.save();
 
-    await blog.populate('category', 'name slug color');
-    // No author population needed
+    await blog.populate("category", "name slug color");
 
     res.json({
       success: true,
-      data: blog
+      data: blog,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -520,31 +526,23 @@ const deleteBlog = async (req, res) => {
     if (!blog) {
       return res.status(404).json({
         success: false,
-        message: 'Blog post not found'
+        message: "Blog post not found",
       });
     }
 
-    // Check permissions
-    const canDelete = blog.author.toString() === req.user.id ||
-      ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role.name);
+    
 
-    if (!canDelete) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
 
     await Blog.findByIdAndDelete(req.params.id);
 
     res.json({
       success: true,
-      message: 'Blog post deleted successfully'
+      message: "Blog post deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -562,8 +560,8 @@ const getMyBlogs = async (req, res) => {
     }
 
     const blogs = await Blog.find(filter)
-      .populate('category', 'name slug color')
-      .select('-plainTextContent')
+      .populate("category", "name slug color")
+      .select("-plainTextContent")
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -577,13 +575,13 @@ const getMyBlogs = async (req, res) => {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -596,7 +594,7 @@ module.exports = {
   deleteBlog,
   getMyBlogs,
   getLatestBlogs,
-  getOlderBlogs
-  , searchBlogs,
-  getBlogsByCategory
+  getOlderBlogs,
+  searchBlogs,
+  getBlogsByCategory,
 };
